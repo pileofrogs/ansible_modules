@@ -32,8 +32,7 @@ def main():
   if rc == 0:
       module.exit_json(rc=rc, out=out, err=err, changed=True, failed=False)
   if err == '' and rc == 1:
-    p = re.compile('.*is already installed and is the same as the released version.*')
-    if p.match(out):
+    if re.search('is already installed and is the same as the released version', out, re.M):
       module.exit_json(out=out, err=err, failed=False, changed=False)
     module.fail_json(rc=rc, out=out, msg=err, failed=True)
 
