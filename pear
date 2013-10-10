@@ -2,6 +2,25 @@
 
 import re
 
+DOCUMENTATION = '''
+---
+module: pear
+short_description: Install PHP libs with I(pear)
+description:
+     - Installs PHP libx with I(pear)
+     - Only installs.  Does not uninstall or offer configuration.  If you need to configure pear, do so before using this module.
+options:
+  name:
+    description:
+      - "Name of the pear lib as expected by pear command line tool, like C(Archive_Tar). 
+    required: true
+    default: null
+author: Dylan Martin
+'''
+EXAMPLES = '''
+- yum: name=Archive_Tar
+'''
+
 def main():
   module = AnsibleModule(
     argument_spec = dict(
