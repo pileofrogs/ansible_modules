@@ -4,21 +4,23 @@ import re
 
 DOCUMENTATION = '''
 ---
-module: pear
-short_description: Install PHP libs with I(pear)
+module: cpan
+short_description: Install perl libs with I(cpan)
 description:
-     - Installs PHP libx with I(pear)
-     - Only installs.  Does not uninstall or offer configuration.  If you need to configure pear, do so before using this module.
+     - Installs perl libs with I(cpan)
+     - Only installs.  Does not uninstall or offer configuration.  If you need to configure cpan, do so before using this module.
+     - Will hang indefinitely if the module wants input (not uncommon!)
+     - Make sure you know how the module's install behaves before trying to use this module with it!
 options:
   name:
     description:
-      - "Name of the pear lib as expected by pear command line tool, like C(Archive_Tar). 
+      - "Name of the perl lib as expected by cpan command line tool, like C(Archive::Tar). 
     required: true
     default: null
 author: Dylan Martin
 '''
 EXAMPLES = '''
-- yum: name=Archive_Tar
+- cpan: name=Archive::Tar
 '''
 
 def main():
@@ -28,16 +30,18 @@ def main():
     ),
   )
   pkg = module.params['name']
-  rc,out,err = module.run_command('pear install "%s"' % pkg)
+  rc,out,err = module.run_command('cpan "%s"' % pkg)
   if rc == 0:
-      module.exit_json(rc=rc, out=out, err=err, changed=True, failed=False)
-  if err == '' and rc == 1:
-    p = re.compile('.*is already installed and is the same as the released version.*')
-    if p.match(out):
-      module.exit_json(out=out, err=err, failed=False, changed=False)
-    module.fail_json(rc=rc, out=out, msg=err, failed=True)
+    if re.search('up to date',out,re.M):
+      module.exit_json(out=out, err=err, failed=False, changed=False, rc=rc)
+    if re.search('Cannot install',out,re.M):
+      module.fail_json( rc=rc, out=out, msg='Cannot install %s' % pkg )
+    if re.search('OK$',out):
+      module.exit_json(out=out, err=err, failed=False, changed=True, rc=rc)
 
-  module.fail_json( rc=rc, out=out, err=err )
+    module.exit_fail(rc=rc, out=out, err=err, msg="I don't know what just happened")
+
+  module.fail_json( rc=rc, out=out, msg=err )
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
